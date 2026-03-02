@@ -9,34 +9,19 @@ function calcularMaximoParcelas() {
     const mesAtual = hoje.getMonth() + 1; // Janeiro = 1, Fevereiro = 2, etc.
     const anoAtual = hoje.getFullYear();
 
-    // Evento em novembro/2026
     const mesEvento = 11; // Novembro
     const anoEvento = 2026;
 
-    // Calcular meses restantes até o evento
-    const mesesRestantes = (anoEvento - anoAtual) * 12 + (mesEvento - mesAtual);
-
-    // Durante Janeiro e Fevereiro de 2026: máximo 10 parcelas
-    // A partir de Março: diminui 1 parcela por mês
-    let maximoParcelas;
-
-    if (anoAtual < 2026) {
-        // Antes de 2026: permite 11 parcelas
-        maximoParcelas = 11;
-    } else if (anoAtual === 2026) {
-        if (mesAtual <= 2) {
-            // Janeiro ou Fevereiro de 2026: máximo 10 parcelas
-            maximoParcelas = 10;
-        } else {
-            // A partir de Março: meses restantes até novembro
-            maximoParcelas = Math.max(1, mesesRestantes);
-        }
-    } else {
-        // Depois de 2026: não permite mais inscrições
-        maximoParcelas = 1;
+    // Evento já passou
+    if (anoAtual > anoEvento || (anoAtual === anoEvento && mesAtual > mesEvento)) {
+        return 0;
     }
 
-    return maximoParcelas;
+    // Meses disponíveis incluindo o mês atual
+    // Março 2026: (11-3)+1 = 9 ✓  Abril: 8 ✓  Maio: 7 ✓
+    const meses = (anoEvento - anoAtual) * 12 + (mesEvento - mesAtual) + 1;
+
+    return Math.min(10, Math.max(1, meses));
 }
 
 /**
