@@ -193,6 +193,23 @@ async function registrarPagamento(dadosPagamento) {
             });
         }
 
+        // Verificar duplicidade pelo chargeId antes de registrar
+        try {
+            const pagamentosExistentes = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Pagamentos!D:D', // Coluna do chargeId
+            });
+
+            const chargeIds = (pagamentosExistentes.data.values || []).flat();
+            if (chargeIds.includes(dadosPagamento.chargeId)) {
+                console.log(`⚠️ Pagamento já registrado (chargeId: ${dadosPagamento.chargeId}). Ignorando duplicata.`);
+                return;
+            }
+        } catch (checkError) {
+            console.warn('⚠️ Erro ao verificar duplicidade, continuando com registro:', checkError.message);
+            // Em caso de erro na verificação, continua o fluxo normal para não perder pagamento
+        }
+
         // Registrar pagamento
         const valorReais = ((dadosPagamento.amount || 0) / 100).toFixed(2);
         const dataPagamento = dadosPagamento.paidAt || new Date().toISOString();
