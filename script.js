@@ -429,6 +429,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Mostrar/ocultar pergunta 2 (dia do WhatsApp) baseado na pergunta 1
+    const pergunta1 = document.getElementById('pergunta1');
+    if (pergunta1) {
+        pergunta1.addEventListener('change', function() {
+            const container = document.getElementById('pergunta2_container');
+            const pergunta2 = document.getElementById('pergunta2');
+            if (this.value === 'WhatsApp') {
+                container.style.display = 'block';
+                pergunta2.setAttribute('required', 'required');
+            } else {
+                container.style.display = 'none';
+                pergunta2.removeAttribute('required');
+                pergunta2.value = '';
+            }
+        });
+    }
+
     // Máscaras de formatação
     const telefoneInput = document.getElementById('telefone');
     if (telefoneInput) {
@@ -535,6 +552,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Validar pergunta sobre origem da inscrição
+            const pergunta1Value = document.getElementById('pergunta1').value;
+            if (!pergunta1Value) {
+                alert('Por favor, indique onde você recebeu o estímulo para se inscrever.');
+                return;
+            }
+            if (pergunta1Value === 'WhatsApp' && !document.getElementById('pergunta2').value) {
+                alert('Por favor, indique em qual dia você recebeu a mensagem no WhatsApp.');
+                return;
+            }
+
             // Obter método de pagamento
             const metodoPagamento = document.getElementById('metodo_pagamento').value;
 
@@ -558,6 +586,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 possui_deficiencia: document.getElementById('possui_deficiencia').checked,
                 descricao_necessidades: document.getElementById('descricao_necessidades').value || null,
                 interesse_transfer: document.getElementById('interesse_transfer').checked,
+                pergunta1: document.getElementById('pergunta1').value,
+                pergunta2: document.getElementById('pergunta2').value || null,
                 metodo_pagamento: metodoPagamento,
                 numero_parcelas: metodoPagamento === 'pix' ? parseInt(document.getElementById('numero_parcelas').value) : 1,
                 dia_vencimento: document.getElementById('dia_vencimento').value || null,

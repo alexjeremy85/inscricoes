@@ -159,7 +159,9 @@ async function salvarInscricao(dadosInscricao) {
             tipoPagamento, // tipo_pagamento (PIX ou CARTAO baseado no request)
             '', // parcelas_cartao (vazio inicialmente, preenchido pelo webhook)
             '', // transacao_id (vazio inicialmente, preenchido pelo webhook)
-            codPaisLimpo // cod_pais (código do país, ex: +55, +1, +351)
+            codPaisLimpo, // cod_pais (código do país, ex: +55, +1, +351)
+            dadosInscricao.pergunta1 || '', // pergunta1 (origem da inscrição)
+            dadosInscricao.pergunta2 || '' // pergunta2 (dia do WhatsApp, se aplicável)
         ];
 
         // Mantenha o INSERT_ROWS que adicionamos antes, é importante
@@ -239,6 +241,20 @@ export default async function handler(req, res) {
             return res.status(400).json({
                 error: 'Termo de desistência não aceito',
                 message: 'É necessário estar ciente das condições de desistência'
+            });
+        }
+
+        if (!dados.pergunta1) {
+            return res.status(400).json({
+                error: 'Pergunta obrigatória',
+                message: 'Indique onde você recebeu o estímulo para se inscrever'
+            });
+        }
+
+        if (dados.pergunta1 === 'WhatsApp' && !dados.pergunta2) {
+            return res.status(400).json({
+                error: 'Pergunta obrigatória',
+                message: 'Indique em qual dia você recebeu a mensagem no WhatsApp'
             });
         }
 
