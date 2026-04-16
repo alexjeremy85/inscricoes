@@ -160,6 +160,7 @@ async function salvarInscricao(dadosInscricao) {
             '', // parcelas_cartao (vazio inicialmente, preenchido pelo webhook)
             '', // transacao_id (vazio inicialmente, preenchido pelo webhook)
             codPaisLimpo, // cod_pais (código do país, ex: +55, +1, +351)
+            '', // status_pagamento (vazio inicialmente, preenchido pelo webhook)
             dadosInscricao.pergunta1 || '', // pergunta1 (origem da inscrição)
             dadosInscricao.pergunta2 || '' // pergunta2 (dia do WhatsApp, se aplicável)
         ];
