@@ -1,6 +1,6 @@
 # 3º Encontemas da Diversidade 2026
 
-Sistema completo de inscrições e gestão de pagamentos para o evento **3º Encontemas da Diversidade**.
+Sistema completo de inscrições e gestão de pagamentos para o evento **3º Encontemas da Diversidade**. 
 
 ## 🎯 Sobre o Evento
 
