@@ -4,7 +4,7 @@ Sistema completo de inscrições e gestão de pagamentos para o evento **3º Enc
 
 ## 🎯 Sobre o Evento
 
-- **Tema:** "Nós Realmente Nos Recuperamos"
+- **Tema:** "Nós Realmente Nos Recuperamos" 
 - **Data:** 27, 28 e 29 de Novembro de 2026
 - **Local:** Terra do Saber, Cajamar - SP
 - **Vagas:** 150 participantes
