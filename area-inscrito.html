@@ -501,7 +501,7 @@
         // Carregar dados do inscrito
         async function carregarDadosInscrito() {
             try {
-                const cpf = localStorage.getItem('inscrito_cpf');
+                const cpf = sessionStorage.getItem('inscrito_cpf');
 
                 if (!cpf) {
                     window.location.href = '/login-inscrito.html';
@@ -787,7 +787,7 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('inscrito_cpf');
+            sessionStorage.removeItem('inscrito_cpf');
             window.location.href = '/login-inscrito.html';
         }
 
@@ -866,7 +866,7 @@
             try {
                 console.log('🔍 Verificando atualizações de parcelas...');
 
-                const cpf = localStorage.getItem('inscrito_cpf');
+                const cpf = sessionStorage.getItem('inscrito_cpf');
                 if (!cpf) return;
 
                 // Buscar dados atualizados

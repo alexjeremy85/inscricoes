@@ -296,17 +296,17 @@
     </div>
 
     <script>
-        // Recuperar dados da inscrição da URL ou localStorage
+        // Recuperar dados da inscrição da URL ou sessionStorage
         const urlParams = new URLSearchParams(window.location.search);
         const inscricaoData = {
-            id_inscricao: urlParams.get('id_inscricao') || localStorage.getItem('inscricao_id_inscricao'), // IMPORTANTE: Capturar id_inscricao
-            nome: urlParams.get('nome') || localStorage.getItem('inscricao_nome'),
-            email: urlParams.get('email') || localStorage.getItem('inscricao_email'),
-            numero_parcelas: urlParams.get('parcelas') || localStorage.getItem('inscricao_parcelas'),
-            valor_parcela: urlParams.get('valor_parcela') || localStorage.getItem('inscricao_valor_parcela'),
-            valor_total: urlParams.get('valor_total') || localStorage.getItem('inscricao_valor_total'),
-            telefone: localStorage.getItem('inscricao_telefone'),
-            cpf: localStorage.getItem('inscricao_cpf')
+            id_inscricao: urlParams.get('id_inscricao') || sessionStorage.getItem('inscricao_id_inscricao'), // IMPORTANTE: Capturar id_inscricao
+            nome: urlParams.get('nome') || sessionStorage.getItem('inscricao_nome'),
+            email: urlParams.get('email') || sessionStorage.getItem('inscricao_email'),
+            numero_parcelas: urlParams.get('parcelas') || sessionStorage.getItem('inscricao_parcelas'),
+            valor_parcela: urlParams.get('valor_parcela') || sessionStorage.getItem('inscricao_valor_parcela'),
+            valor_total: urlParams.get('valor_total') || sessionStorage.getItem('inscricao_valor_total'),
+            telefone: sessionStorage.getItem('inscricao_telefone'),
+            cpf: sessionStorage.getItem('inscricao_cpf')
         };
 
         // Log para debug
@@ -411,7 +411,7 @@
             // Redirecionar para área do inscrito
             const cpf = inscricaoData.cpf;
             if (cpf) {
-                localStorage.setItem('inscrito_cpf', cpf);
+                sessionStorage.setItem('inscrito_cpf', cpf);
                 window.location.href = '/area-inscrito.html';
             } else {
                 alert('CPF não encontrado. Por favor, acesse a área do inscrito pela página inicial digitando seu CPF.');
