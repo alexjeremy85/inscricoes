@@ -156,8 +156,9 @@ export async function logWebhook(acao, dados) {
  * Salva log de pagamento confirmado
  */
 export async function logPagamento(cpf, parcela, valor, metodo) {
-    const mensagem = `Pagamento confirmado: CPF ${cpf}, Parcela ${parcela}, R$ ${valor}`;
-    await salvarLog('pagamento', 'success', mensagem, { cpf, parcela, valor, metodo });
+    const cpfMascarado = cpf ? `***${cpf.slice(-4)}` : '***';
+    const mensagem = `Pagamento confirmado: CPF ${cpfMascarado}, Parcela ${parcela}, R$ ${valor}`;
+    await salvarLog('pagamento', 'success', mensagem, { parcela, valor, metodo });
 }
 
 /**
@@ -167,7 +168,6 @@ export async function logErro(contexto, erro, dadosAdicionais = null) {
     const mensagem = `Erro em ${contexto}: ${erro.message}`;
     const dados = {
         erro: erro.message,
-        stack: erro.stack,
         ...dadosAdicionais
     };
     await salvarLog('erro', 'error', mensagem, dados);
@@ -177,6 +177,7 @@ export async function logErro(contexto, erro, dadosAdicionais = null) {
  * Salva log de inscrição criada
  */
 export async function logInscricao(idInscricao, nome, cpf) {
-    const mensagem = `Nova inscrição: ${nome} (CPF: ${cpf})`;
-    await salvarLog('inscricao', 'success', mensagem, { idInscricao, nome, cpf });
+    const cpfMascarado = cpf ? `***${cpf.slice(-4)}` : '***';
+    const mensagem = `Nova inscrição: ${nome} (CPF: ${cpfMascarado})`;
+    await salvarLog('inscricao', 'success', mensagem, { idInscricao, nome });
 }

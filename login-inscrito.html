@@ -254,9 +254,7 @@
                     throw new Error(data.error || data.message || 'CPF não encontrado. Verifique se você já realizou sua inscrição.');
                 }
 
-                // Salvar CPF no localStorage
-                localStorage.setItem('inscrito_cpf', cpf);
-                localStorage.setItem('inscrito_data', JSON.stringify(data));
+                sessionStorage.setItem('inscrito_cpf', cpf);
 
                 // Redirecionar para área do inscrito
                 window.location.href = '/area-inscrito.html';

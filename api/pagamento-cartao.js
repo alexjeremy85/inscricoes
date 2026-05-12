@@ -1,4 +1,5 @@
-// API para processar pagamento por cartão de crédito via PagBank
+import { rateLimit } from './rate-limiter.js';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método não permitido' });
@@ -36,19 +37,14 @@ export default async function handler(req, res) {
             });
         }
 
-        console.log('💳 Processando pagamento com cartão de crédito...');
-        console.log('🆔 ID Inscrição:', id_inscricao);
-        console.log('📧 Email:', email);
-        console.log('💰 Valor Total:', valor_total);
+        const { allowed } = rateLimit(req, { maxRequests: 5, windowMs: 60000 });
+        if (!allowed) {
+            return res.status(429).json({ error: 'Muitas tentativas. Aguarde um minuto.' });
+        }
 
-        // Preparar dados do pagamento PagBank
+        console.log('💳 Processando pagamento com cartão - ID:', id_inscricao);
+
         const pagBankToken = process.env.PAGBANK_TOKEN;
-
-        // DIAGNÓSTICO: Ver variáveis de ambiente
-        console.log('🔍 DIAGNÓSTICO PAGAMENTO-CARTAO:');
-        console.log('PAGBANK_ENV (raw):', JSON.stringify(process.env.PAGBANK_ENV));
-        console.log('PAGBANK_ENV (value):', process.env.PAGBANK_ENV);
-        console.log('PAGBANK_TOKEN (primeiros 20 chars):', pagBankToken?.substring(0, 20));
 
         if (!pagBankToken) {
             console.error('❌ PAGBANK_TOKEN não configurado');
@@ -87,11 +83,7 @@ export default async function handler(req, res) {
         // Converter valor para centavos
         const valorCentavos = Math.round(parseFloat(valor_total) * 100);
 
-        console.log('📋 Dados processados:');
-        console.log('  CPF:', cpfLimpo);
-        console.log('  Telefone - DDD:', ddd, 'Número:', numeroTelefone);
-        console.log('  Valor (centavos):', valorCentavos);
-        console.log('  Parcelas:', numero_parcelas_cartao);
+        console.log('📋 Valor (centavos):', valorCentavos, '- Parcelas:', numero_parcelas_cartao);
 
         // Reference ID = ID da inscrição (para rastreamento)
         const referenceId = id_inscricao;
@@ -147,16 +139,11 @@ export default async function handler(req, res) {
                 }
             ],
             notification_urls: [
-                `https://inscricoes-sigma.vercel.app/api/webhook-pagbank`
+                `${process.env.WEBHOOK_URL || 'https://inscricoes-sigma.vercel.app/api/webhook-pagbank'}`
             ]
         };
 
         console.log('📤 Enviando requisição para PagBank (Cartão)...');
-        console.log('Payload:', JSON.stringify(pagBankPayload, null, 2));
-        console.log('🔐 Encrypted card length:', cartao_encrypted.length);
-        console.log('🔐 Encrypted card (first 50 chars):', cartao_encrypted.substring(0, 50));
-        console.log('🔐 Encrypted card (last 50 chars):', cartao_encrypted.substring(cartao_encrypted.length - 50));
-        console.log('✨ Usando public key atualizada');
 
         // Fazer requisição para PagBank
         // Determinar ambiente (sandbox ou produção)
@@ -166,14 +153,7 @@ export default async function handler(req, res) {
             ? 'https://api.pagseguro.com/orders'  // URL CORRETA de produção
             : 'https://sandbox.api.pagseguro.com/orders';
 
-        console.log('🔍 Ambiente detectado:', {
-            rawEnv: process.env.PAGBANK_ENV,
-            envValueTrimmed: envValue,
-            isProduction: isProduction,
-            urlEscolhida: pagBankUrl
-        });
-        console.log('🌐 URL PagBank:', pagBankUrl);
-        console.log('🔑 Token (primeiros 10 chars):', pagBankToken.substring(0, 10) + '...');
+        console.log('🌐 Ambiente:', isProduction ? 'PRODUCTION' : 'SANDBOX');
 
         const response = await fetch(pagBankUrl, {
             method: 'POST',
@@ -186,68 +166,25 @@ export default async function handler(req, res) {
 
         // Capturar resposta como texto primeiro
         const responseText = await response.text();
-        console.log('📥 Resposta PagBank RAW:', responseText);
-        console.log('📊 Status HTTP:', response.status);
+        console.log('📊 Status HTTP PagBank:', response.status);
 
         // Tentar fazer parse do JSON
         let responseData;
         try {
             responseData = JSON.parse(responseText);
-            console.log('✅ JSON parseado com sucesso');
-            console.log('Response completo:', JSON.stringify(responseData, null, 2));
         } catch (parseError) {
-            console.error('❌ Erro ao fazer parse do JSON da resposta PagBank');
-            console.error('Parse Error:', parseError.message);
-            console.error('Status HTTP:', response.status);
-            console.error('Resposta recebida (primeiros 500 chars):', responseText.substring(0, 500));
-
-            // Diagnosticar o problema
-            let errorMessage = 'Erro ao processar resposta do PagBank';
-            let errorDetails = {
-                status: response.status,
-                responsePreview: responseText.substring(0, 200),
-                parseError: parseError.message
-            };
-
-            if (response.status === 500 && responseText.trim() === '') {
-                errorMessage = 'PagBank retornou erro 500 sem resposta. Possíveis causas: ' +
-                    '(1) Token/credenciais inválidas ou desabilitadas, ' +
-                    '(2) Ambiente incorreto (sandbox vs produção), ' +
-                    '(3) Conta migrada para produção mas usando credenciais de sandbox';
-                errorDetails.suggestedFix = 'Verifique se PAGBANK_ENV, PAGBANK_TOKEN e PAGBANK_PUBLIC_KEY ' +
-                    'estão configurados corretamente para o ambiente de ' + (isProduction ? 'PRODUÇÃO' : 'SANDBOX');
-            } else if (response.status === 401 || response.status === 403) {
-                errorMessage = 'Autenticação falhou. Token inválido ou sem permissão para acessar este ambiente.';
-                errorDetails.suggestedFix = 'Verifique se o token corresponde ao ambiente configurado (produção vs sandbox)';
-            }
-
+            console.error('❌ Erro ao parsear resposta PagBank. Status:', response.status);
             return res.status(500).json({
                 error: 'Erro ao processar pagamento',
-                message: errorMessage,
-                details: errorDetails
+                message: 'Erro na comunicação com o gateway de pagamento'
             });
         }
 
         if (!response.ok) {
-            console.error('❌ Erro na API PagBank');
-            console.error('Status:', response.status);
-            console.error('Response:', JSON.stringify(responseData, null, 2));
-
-            // Tentar extrair detalhes específicos do erro
-            if (responseData.error_messages && Array.isArray(responseData.error_messages)) {
-                responseData.error_messages.forEach((err, index) => {
-                    console.error(`Erro ${index + 1}:`, {
-                        code: err.code,
-                        description: err.description,
-                        parameter_name: err.parameter_name || 'não especificado'
-                    });
-                });
-            }
-
+            console.error('❌ Erro PagBank - Status:', response.status);
             return res.status(response.status).json({
                 error: 'Erro ao processar pagamento',
-                message: responseData.error_messages?.[0]?.description || 'Erro desconhecido',
-                details: responseData
+                message: responseData.error_messages?.[0]?.description || 'Erro no processamento do pagamento'
             });
         }
 
@@ -294,20 +231,14 @@ export default async function handler(req, res) {
             approved: paymentStatus === 'PAID',
             message: paymentStatus === 'PAID'
                 ? 'Pagamento aprovado com sucesso!'
-                : 'Aguardando confirmação do pagamento',
-            pagbank_response: responseData
+                : 'Aguardando confirmação do pagamento'
         });
 
     } catch (error) {
-        console.error('❌ Erro ao processar pagamento:', error);
-        console.error('Stack trace:', error.stack);
-        console.error('Tipo do erro:', error.name);
-
+        console.error('❌ Erro ao processar pagamento:', error.message);
         return res.status(500).json({
             error: 'Erro interno do servidor',
-            message: error.message,
-            errorType: error.name,
-            details: error.cause || 'Sem detalhes adicionais'
+            message: 'Erro ao processar o pagamento. Tente novamente.'
         });
     }
 }

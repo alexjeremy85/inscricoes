@@ -45,7 +45,7 @@ async function acessarAreaInscritoMobile() {
         }
 
         // Salvar CPF e redirecionar
-        localStorage.setItem('inscrito_cpf', cpf);
+        sessionStorage.setItem('inscrito_cpf', cpf);
         window.location.href = '/area-inscrito.html';
 
     } catch (error) {
@@ -111,9 +111,7 @@ async function acessarAreaInscrito() {
             throw new Error(data.error || data.message || 'CPF não encontrado. Verifique se você já realizou sua inscrição.');
         }
 
-        // Salvar CPF e dados no localStorage
-        localStorage.setItem('inscrito_cpf', cpf);
-        localStorage.setItem('inscrito_data', JSON.stringify(data));
+        sessionStorage.setItem('inscrito_cpf', cpf);
 
         // Redirecionar DIRETO para área do inscrito
         window.location.href = '/area-inscrito.html';
@@ -755,14 +753,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 } else {
                     // Pagamento PIX - redirecionar para página de pagamento
-                    localStorage.setItem('inscricao_id_inscricao', idInscricao); // IMPORTANTE: Salvar id_inscricao
-                    localStorage.setItem('inscricao_nome', data.inscricao.nome);
-                    localStorage.setItem('inscricao_email', data.inscricao.email);
-                    localStorage.setItem('inscricao_parcelas', data.inscricao.numero_parcelas);
-                    localStorage.setItem('inscricao_valor_parcela', data.inscricao.valor_parcela);
-                    localStorage.setItem('inscricao_valor_total', data.inscricao.valor_total);
-                    localStorage.setItem('inscricao_telefone', formData.telefone);
-                    localStorage.setItem('inscricao_cpf', formData.cpf || '');
+                    sessionStorage.setItem('inscricao_id_inscricao', idInscricao); // IMPORTANTE: Salvar id_inscricao
+                    sessionStorage.setItem('inscricao_nome', data.inscricao.nome);
+                    sessionStorage.setItem('inscricao_email', data.inscricao.email);
+                    sessionStorage.setItem('inscricao_parcelas', data.inscricao.numero_parcelas);
+                    sessionStorage.setItem('inscricao_valor_parcela', data.inscricao.valor_parcela);
+                    sessionStorage.setItem('inscricao_valor_total', data.inscricao.valor_total);
+                    sessionStorage.setItem('inscricao_telefone', formData.telefone);
 
                     // Redirecionar para página de pagamento PIX (incluir id_inscricao)
                     window.location.href = `/pagamento.html?id_inscricao=${encodeURIComponent(idInscricao)}&nome=${encodeURIComponent(data.inscricao.nome)}&email=${encodeURIComponent(data.inscricao.email)}&parcelas=${data.inscricao.numero_parcelas}&valor_parcela=${encodeURIComponent(data.inscricao.valor_parcela)}&valor_total=${encodeURIComponent(data.inscricao.valor_total)}`;
@@ -853,14 +850,14 @@ document.head.appendChild(style);
 
 // Debug: Função para visualizar inscrições no console
 window.verInscricoes = function() {
-    const inscricoes = JSON.parse(localStorage.getItem('inscricoes') || '[]');
+    const inscricoes = JSON.parse(sessionStorage.getItem('inscricoes') || '[]');
     console.log('📊 Inscrições registradas:', inscricoes.length);
     console.table(inscricoes);
     return inscricoes;
 };
 
 window.limparInscricoes = function() {
-    localStorage.removeItem('inscricoes');
+    sessionStorage.removeItem('inscricoes');
     console.log('🗑️ Inscrições limpas!');
 };
 

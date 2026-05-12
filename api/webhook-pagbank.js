@@ -1,6 +1,7 @@
 // Webhook para receber notificações de pagamento do PagBank
 import { google } from 'googleapis';
 import { logWebhook, logPagamento, logErro } from './logger.js';
+import { rateLimit } from './rate-limiter.js';
 
 /**
  * Converte índice numérico para letra de coluna do Excel
@@ -19,24 +20,19 @@ function indexToColumnLetter(index) {
 }
 
 export default async function handler(req, res) {
-    // LOG CRÍTICO: registrar TODA chamada ao webhook (qualquer método HTTP)
-    console.log('🌐 ===== WEBHOOK CHAMADO =====');
-    console.log('🌐 Método:', req.method);
-    console.log('🌐 URL:', req.url);
-    console.log('🌐 Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('🌐 Body:', JSON.stringify(req.body, null, 2));
-    console.log('🌐 ============================');
-
-    // Apenas aceita POST
     if (req.method !== 'POST') {
-        console.warn('⚠️ Webhook chamado com método diferente de POST:', req.method);
         return res.status(405).json({ error: 'Método não permitido' });
+    }
+
+    const { allowed } = rateLimit(req, { maxRequests: 30, windowMs: 60000 });
+    if (!allowed) {
+        return res.status(429).json({ error: 'Muitas requisições' });
     }
 
     try {
         const notification = req.body;
 
-        console.log('🔔 Notificação PagBank recebida:', JSON.stringify(notification, null, 2));
+        console.log('🔔 Webhook PagBank recebido - Order:', notification?.id);
 
         // LOG: Salvar notificação recebida
         await logWebhook('Notificação recebida', {
@@ -51,23 +47,43 @@ export default async function handler(req, res) {
         const referenceId = notification.reference_id;
         const charges = notification.charges || [];
 
+        // Verificar pedido diretamente na API PagBank antes de confiar no body
+        const pagBankToken = process.env.PAGBANK_TOKEN;
+        if (pagBankToken && orderId) {
+            try {
+                const envValue = (process.env.PAGBANK_ENV || '').trim().toLowerCase();
+                const isProduction = envValue === 'production';
+                const verifyUrl = isProduction
+                    ? `https://api.pagseguro.com/orders/${orderId}`
+                    : `https://sandbox.api.pagseguro.com/orders/${orderId}`;
+
+                const verifyResponse = await fetch(verifyUrl, {
+                    headers: { 'Authorization': `Bearer ${pagBankToken}` }
+                });
+
+                if (verifyResponse.ok) {
+                    const verifiedOrder = await verifyResponse.json();
+                    const verifiedCharges = verifiedOrder.charges || [];
+                    const verifiedPaid = verifiedCharges.find(c => c.status === 'PAID');
+
+                    if (!verifiedPaid) {
+                        console.warn('⚠️ Webhook recebido mas API PagBank não confirma pagamento para order:', orderId);
+                        return res.status(200).json({ received: true, verified: false });
+                    }
+                }
+            } catch (verifyError) {
+                console.warn('⚠️ Erro ao verificar pedido no PagBank, prosseguindo com dados do webhook:', verifyError.message);
+            }
+        }
+
         // Verificar status do pagamento
         const paidCharge = charges.find(charge => charge.status === 'PAID');
 
         if (paidCharge) {
-            // Detectar método de pagamento
             const paymentMethod = paidCharge.payment_method?.type || 'UNKNOWN';
             const isCardPayment = paymentMethod === 'CREDIT_CARD' || paymentMethod === 'DEBIT_CARD';
 
-            console.log('✅ Pagamento confirmado!', {
-                orderId,
-                referenceId,
-                chargeId: paidCharge.id,
-                amount: paidCharge.amount?.value,
-                paidAt: paidCharge.paid_at,
-                paymentMethod: paymentMethod,
-                isCardPayment: isCardPayment
-            });
+            console.log('✅ Pagamento verificado:', { orderId, chargeId: paidCharge.id, paymentMethod });
 
             // Registrar pagamento no Google Sheets
             await registrarPagamento({
