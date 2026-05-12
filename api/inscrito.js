@@ -105,9 +105,18 @@ export default async function handler(req, res) {
             });
         }
 
+        const parcelaFields = {};
+        for (let i = 1; i <= numeroParcelas; i++) {
+            const pad = String(i).padStart(2, '0');
+            parcelaFields[`parcela_${pad}_paga`] = inscrito[`parcela_${pad}_paga`] || '';
+            parcelaFields[`data_pagamento_${pad}`] = inscrito[`data_pagamento_${pad}`] || '';
+            parcelaFields[`data_paga_${pad}`] = inscrito[`data_paga_${pad}`] || '';
+        }
+
         return res.status(200).json({
             id_inscricao: inscrito.id_inscricao,
             nome_completo: inscrito.nome_completo,
+            cpf: inscrito.cpf,
             email: inscrito.email,
             telefone: inscrito.telefone,
             cidade_pais: inscrito.cidade_pais,
@@ -117,6 +126,7 @@ export default async function handler(req, res) {
             dia_vencimento: inscrito.dia_vencimento || '15',
             forma_pagamento: inscrito.forma_pagamento,
             inscricao_confirmada: inscrito.inscricao_confirmada,
+            ...parcelaFields,
             parcelas: parcelas
         });
 
