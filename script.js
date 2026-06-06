@@ -760,6 +760,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionStorage.setItem('inscricao_valor_parcela', data.inscricao.valor_parcela);
                     sessionStorage.setItem('inscricao_valor_total', data.inscricao.valor_total);
                     sessionStorage.setItem('inscricao_telefone', formData.telefone);
+                    sessionStorage.setItem('inscricao_cpf', formData.cpf);
 
                     // Redirecionar para página de pagamento PIX (incluir id_inscricao)
                     window.location.href = `/pagamento.html?id_inscricao=${encodeURIComponent(idInscricao)}&nome=${encodeURIComponent(data.inscricao.nome)}&email=${encodeURIComponent(data.inscricao.email)}&parcelas=${data.inscricao.numero_parcelas}&valor_parcela=${encodeURIComponent(data.inscricao.valor_parcela)}&valor_total=${encodeURIComponent(data.inscricao.valor_total)}`;
