@@ -162,7 +162,8 @@ async function salvarInscricao(dadosInscricao) {
             codPaisLimpo, // cod_pais (código do país, ex: +55, +1, +351)
             '', // status_pagamento (vazio inicialmente, preenchido pelo webhook)
             dadosInscricao.pergunta1 || '', // pergunta1 (origem da inscrição)
-            dadosInscricao.pergunta2 || '' // pergunta2 (dia do WhatsApp, se aplicável)
+            dadosInscricao.pergunta2 || '', // pergunta2 (dia do WhatsApp, se aplicável)
+            dadosInscricao.resposta3 || '' // Resposta3 (nome de quem indicou, se aplicável)
         ];
 
         // Mantenha o INSERT_ROWS que adicionamos antes, é importante
@@ -256,6 +257,13 @@ export default async function handler(req, res) {
             return res.status(400).json({
                 error: 'Pergunta obrigatória',
                 message: 'Indique em qual dia você recebeu a mensagem no WhatsApp'
+            });
+        }
+
+        if (dados.pergunta1 === 'Indicação de companheiro(a/e)' && !dados.resposta3) {
+            return res.status(400).json({
+                error: 'Pergunta obrigatória',
+                message: 'Informe o nome do companheiro(a/e) que te indicou'
             });
         }
 
