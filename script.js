@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Mostrar/ocultar pergunta 2 (dia do WhatsApp) baseado na pergunta 1
+    // Mostrar/ocultar pergunta 2 (dia do WhatsApp) e resposta 3 (nome de quem indicou) baseado na pergunta 1
     const pergunta1 = document.getElementById('pergunta1');
     if (pergunta1) {
         pergunta1.addEventListener('change', function() {
@@ -440,6 +440,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.style.display = 'none';
                 pergunta2.removeAttribute('required');
                 pergunta2.value = '';
+            }
+
+            const resposta3Container = document.getElementById('resposta3_container');
+            const resposta3 = document.getElementById('resposta3');
+            if (this.value === 'Indicação de companheiro(a/e)') {
+                resposta3Container.style.display = 'block';
+                resposta3.setAttribute('required', 'required');
+            } else {
+                resposta3Container.style.display = 'none';
+                resposta3.removeAttribute('required');
+                resposta3.value = '';
             }
         });
     }
@@ -560,6 +571,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Por favor, indique em qual dia você recebeu a mensagem no WhatsApp.');
                 return;
             }
+            if (pergunta1Value === 'Indicação de companheiro(a/e)' && !document.getElementById('resposta3').value.trim()) {
+                alert('Por favor, informe o nome do companheiro(a/e) que te indicou.');
+                return;
+            }
 
             // Obter método de pagamento
             const metodoPagamento = document.getElementById('metodo_pagamento').value;
@@ -586,6 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 interesse_transfer: document.getElementById('interesse_transfer').checked,
                 pergunta1: document.getElementById('pergunta1').value,
                 pergunta2: document.getElementById('pergunta2').value || null,
+                resposta3: document.getElementById('resposta3').value.trim() || null,
                 metodo_pagamento: metodoPagamento,
                 numero_parcelas: metodoPagamento === 'pix' ? parseInt(document.getElementById('numero_parcelas').value) : 1,
                 dia_vencimento: document.getElementById('dia_vencimento').value || null,
